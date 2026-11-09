@@ -1,0 +1,81 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <AssemblyName>Discloud.Net</AssemblyName>
+    <RootNamespace>Discloud</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <!-- NuGet package -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Discloud.Net</PackageId>
+    <Version>1.0.0</Version>
+    <Title>Discloud.Net</Title>
+    <Description>A strongly typed, asynchronous .NET client for the Discloud API (v2): applications, moderators, file explorer, domains, snapshots, environment variables, projects, managed databases and teams. Supports dependency injection, IHttpClientFactory and appsettings.json configuration.</Description>
+    <PackageTags>discloud;api;client;sdk;hosting;discord;bot</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>See https://github.com/nathancmiguel/Discloud.NET/releases</PackageReleaseNotes>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EnablePackageValidation>true</EnablePackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The DTOs assembly ships inside this package instead of as a separate package:
+      PrivateAssets keeps it out of the dependency list, and IncludeDtosInPackage copies its
+      assembly and XML documentation next to Discloud.Net.dll (its .pdb goes to the .snupkg).
+    -->
+    <ProjectReference Include="..\DTOs\DTOs.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Discloud.Tests" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Packing with the no-build option must resolve the DTOs output without building it again. -->
+    <BuildProjectReferences Condition="'$(NoBuild)' == 'true'">false</BuildProjectReferences>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeDtosInPackage</TargetsForTfmSpecificBuildOutput>
+    <TargetsForTfmSpecificDebugSymbolsInPackage>$(TargetsForTfmSpecificDebugSymbolsInPackage);IncludeDtosSymbolsInPackage</TargetsForTfmSpecificDebugSymbolsInPackage>
+  </PropertyGroup>
+
+  <!--
+    The DTOs files are derived from the resolved DTOs assembly path, so the XML documentation and symbols are
+    included whether or not the pack step builds the project.
+  -->
+  <Target Name="_ResolveDtosPackageFiles" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <_DtosAssembly Include="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' And '%(Extension)' == '.dll'" />
+      <_DtosRelatedFile Include="@(_DtosAssembly->'%(RootDir)%(Directory)%(Filename).xml')" />
+      <_DtosSymbolFile Include="@(_DtosAssembly->'%(RootDir)%(Directory)%(Filename).pdb')" />
+    </ItemGroup>
+    <Error Condition="'@(_DtosAssembly)' == ''" Text="The DTOs assembly was not resolved; it would be missing from the package." />
+    <Error Condition="!Exists('%(_DtosRelatedFile.Identity)')" Text="DTOs XML documentation not found: %(_DtosRelatedFile.Identity)" />
+  </Target>
+
+  <Target Name="IncludeDtosInPackage" DependsOnTargets="_ResolveDtosPackageFiles">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(_DtosAssembly);@(_DtosRelatedFile)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="IncludeDtosSymbolsInPackage" DependsOnTargets="_ResolveDtosPackageFiles">
+    <ItemGroup>
+      <TfmSpecificDebugSymbolsFile Include="@(_DtosSymbolFile)" Condition="Exists('%(Identity)')" TargetPath="%(Filename)%(Extension)" TargetFramework="$(TargetFramework)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

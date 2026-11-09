@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <AssemblyName>Discloud.Net.DTOs</AssemblyName>
+    <RootNamespace>Discloud.DTOs</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsAotCompatible>true</IsAotCompatible>
+    <!-- Shipped inside the Discloud.Net package; not published on its own. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Discloud.Net" />
+    <InternalsVisibleTo Include="Discloud.Tests" />
+  </ItemGroup>
+
+</Project>
