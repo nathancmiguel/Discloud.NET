@@ -1,0 +1,14 @@
+# Always check out text files with LF, matching end_of_line = lf in .editorconfig.
+# Without this, core.autocrlf=true (the default on Windows, including GitHub's Windows runners)
+# converts files to CRLF and `dotnet format --verify-no-changes` fails.
+* text=auto eol=lf
+
+# Binary files are never converted.
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary
+*.nupkg binary
+*.snupkg binary
+*.dll binary
+*.pdb binary
