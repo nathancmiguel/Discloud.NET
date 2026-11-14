@@ -595,8 +595,9 @@ DISCLOUD_TOKEN=your-api-token dotnet test -c Release
 - `.github/workflows/ci.yml` runs on pushes and pull requests: restore, format check, Release build, tests on
   Linux and Windows, then pack, package validation and a consumer smoke test. Nothing is published.
 - `.github/workflows/release.yml` runs when a tag such as `v1.0.0` or `v1.1.0-preview.1` is pushed: it validates and
-  packs the version from the tag, then publishes it to NuGet using the `NUGET_API_KEY` secret from the `nuget`
-  environment.
+  packs the version from the tag, then publishes it to NuGet with Trusted Publishing (a short-lived key obtained
+  through GitHub OIDC; no API key is stored). It needs a trusted publishing policy on nuget.org and the `NUGET_USER`
+  secret in the `nuget` environment.
 
 ### Contributing
 

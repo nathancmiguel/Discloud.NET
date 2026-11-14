@@ -1,7 +1,9 @@
 name: Release
 
 # Publishes to NuGet when a version tag such as v1.2.3 or v1.3.0-preview.1 is pushed.
-# Requires the NUGET_API_KEY repository (or environment) secret.
+# Authenticates with NuGet Trusted Publishing (GitHub OIDC): no long-lived API key is stored.
+# Requires a trusted publishing policy on nuget.org for this repository, workflow file (release.yml)
+# and environment (nuget), plus the NUGET_USER secret holding the nuget.org profile name.
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+*']
@@ -76,6 +78,9 @@ jobs:
     runs-on: ubuntu-latest
     # Configure required reviewers on this environment to add a manual approval gate.
     environment: nuget
+    permissions:
+      # Lets the job request the GitHub OIDC token exchanged for a short-lived NuGet API key.
+      id-token: write
     steps:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
@@ -88,8 +93,14 @@ jobs:
           name: nuget-package
           path: artifacts
 
+      - name: Log in to NuGet (trusted publishing)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push to NuGet
         # The .snupkg symbols package next to the .nupkg is pushed automatically.
         run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
